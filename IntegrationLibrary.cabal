@@ -22,6 +22,7 @@ source-repository head
 
 library
   exposed-modules:
+      Expr
       Integration
   other-modules:
       Paths_IntegrationLibrary
