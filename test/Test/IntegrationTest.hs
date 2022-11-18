@@ -6,47 +6,57 @@ import Test.Tasty.HUnit (Assertion, assertBool, (@?=))
 import Test.HUnit.Approx ((@?~))
 
 import Integration
+import Expr
 
-f1 :: Double -> Double
-f1 x = x ^ 2
+f1 :: Double -> Expr
+f1 x = Mul (Val x) (Val x)
 
-integralf1 :: Double -> Double
-integralf1 x = x ^ 3 / 3.0
+f2 :: Double -> Expr
+f2 x = Log (Val x)
 
-f2 :: Double -> Double
-f2 x = 1 / (x - 1.0)
+f3 :: Double -> Expr
+f3 x = Sqrt (Val x) 2
 
-f3 :: Double -> Double
-f3 x = 1 / (x - 5.0)
+f4 :: Double -> Expr
+f4 x = Div (Val x) (Val 0.0)
 
-f4 :: Double -> Double
-f4 x = x / sin 0.0
+f5 :: Double -> Expr
+f5 x = Exp (Val x)
 
+f6 :: Double -> Expr
+f6 x = Sqrt (Val x) 1
 
-checkEquality :: Either Error Double -> Either Error Double -> Double -> Assertion
+checkEquality :: Either Error Output -> Maybe Error -> Double -> Assertion
 checkEquality x y eps =
     let ?epsilon = eps in
     go x y
     where
-	  go (Right x) (Right y) = do
-		x @?~ y
-	  go (Left x) (Left y) = do 
+	  go (Right x) (Nothing) = do
+		(result x) @?~ (previousResult x)
+	  go (Left x) (Just y) = do 
 	  	x @?= y
 	  go _ _ = do
 	  	fail $ "Extra Error!"
 
 
-checkAllmethods :: (Double -> Double) -> Double -> Double -> Either Error Double -> Double -> Assertion
-checkAllmethods f a b ans eps = do 
-   res <- partApproxReactangles f a b eps
-   checkEquality res ans eps
-   res <- partApproxTrap f a b eps
-   checkEquality res ans eps
-   res <- partApproxSimpson f a b eps
-   checkEquality res ans eps
+checkAllmethods :: (Double -> Expr) -> Double -> Double -> Maybe Error -> Double -> Assertion
+checkAllmethods f a b errorOccured eps = do 
+   let res = partApproxReactangles f a b eps
+   checkEquality res errorOccured eps
+   let res = partApproxTrap f a b eps
+   checkEquality res errorOccured eps
+   let res = partApproxSimpson f a b eps
+   checkEquality res errorOccured eps
 
 unit_ValidIntegrations = do
-	checkAllmethods f1 1.0 2.0 (Right ((integralf1 2.0) - (integralf1 1.0))) 0.001
-
+  checkAllmethods f1 1.0 2.0 Nothing 0.001
+  checkAllmethods f2 1.0 5.0 Nothing 0.001
+  checkAllmethods f3 1000.0 2000.0 Nothing 0.0001
+ 
 unit_InvalidIntegrations = do 
-	checkAllmethods f2 1.0 2.0 (Left InputFunctionOrBoundsError) 0.001
+  checkAllmethods f1 1.0 5.0 (Just NullSizeOfError) 0.0
+  checkAllmethods f2 (-1.0) 2.0 (Just LogOfNegativeNumber) 0.001
+  checkAllmethods f3 (-2.0) 2.0 (Just SqrtOfNegativeNumber) 0.001
+  checkAllmethods f4 (100.0) (1000.0) (Just DivisionByZero) 0.001
+  checkAllmethods f5 (1.0) (100000000000.0) (Just SomeIntegralError) 0.00001
+  checkAllmethods f6 1.0 10.0 (Just SqrtWithSmallDegree) 0.001
