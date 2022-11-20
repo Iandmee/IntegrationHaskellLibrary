@@ -2,11 +2,10 @@
 
 import Test.Tasty
 import Test.Tasty.Hspec
-import Utils
 import qualified Test.PropertyBasedTest
 import qualified Test.UnitTest
 main :: IO ()
 main = do
-  defaultMainWithOpts (testGroup "All"
+  defaultMain (testGroup "All"
                 [ testGroup	"Properties" Test.PropertyBasedTest.props
                 ])

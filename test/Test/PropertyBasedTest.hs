@@ -15,8 +15,8 @@ genOp = Gen.element [Sum, Sub, Mul, Div]
 genDouble :: Double -> Gen Double
 genDouble n = Gen.double (Range.constant 1 n)
 
-genExprDivZero :: Double -> Gen Expr
-genExprDivZero n =
+genExpr :: Double -> Gen Expr
+genExpr n =
   Gen.recursive
     Gen.choice
     [ -- нерекурсивные генераторы
@@ -29,7 +29,7 @@ genExprDivZero n =
     numGen = Val <$> Gen.double (Range.constant 1 n)
     binOpGen = do
       op <- genOp
-      Gen.subterm2 (genExprDivZero	n) (genExprDivZero n) (Bin op)
+      Gen.subterm2 (genExpr	n) (genExpr n) (Bin op)
 
 
 checkEqualityBool :: (Double -> Expr) -> Double -> Double -> Error -> Bool
@@ -37,43 +37,43 @@ checkEqualityBool ex bound eps er = (partApproxSimpson ex bound (bound + 1) eps)
 
 prop_DivisionByZero :: Property
 prop_DivisionByZero = property $ do
-  expr <- forAll $ genExprDivZero 100
+  expr <- forAll $ genExpr 100
   bound <- forAll $ genDouble 100
   assert (checkEqualityBool (\x -> Bin Sum (expr) (Bin Div (Val x) (Val 0))) bound 0.001 DivisionByZero)
 
 prop_LogOfZero :: Property
 prop_LogOfZero = property $ do
-  expr <- forAll $ genExprDivZero 100
+  expr <- forAll $ genExpr 100
   bound <- forAll $ genDouble 100
   assert (checkEqualityBool (\x -> Bin Sum (expr) (Bin Sub (Un Log (Val 0)) (Val x))) bound 0.001 LogOfZero)
 
 prop_LogOfNegativeNumber :: Property
 prop_LogOfNegativeNumber = property $ do
-  expr <- forAll $ genExprDivZero 100
+  expr <- forAll $ genExpr 100
   bound <- forAll $ genDouble 100
   assert (checkEqualityBool (\x -> Bin Sum (expr) (Bin Sub (Un Log (Val (-2))) (Val x))) bound 0.001 LogOfNegativeNumber)
 
 prop_SqrtOfNegativeNumber :: Property
 prop_SqrtOfNegativeNumber = property $ do
-  expr <- forAll $ genExprDivZero 100
+  expr <- forAll $ genExpr 100
   bound <- forAll $ genDouble 100
   assert (checkEqualityBool (\x -> Bin Sum (expr) (Bin Sub (Sqrt (Val (-2)) 2) (Val x))) bound 0.001 SqrtOfNegativeNumber)
 
 prop_SqrtWithSmallDegree :: Property
 prop_SqrtWithSmallDegree = property $ do
-  expr <- forAll $ genExprDivZero 100
+  expr <- forAll $ genExpr 100
   bound <- forAll $ genDouble 100
   assert (checkEqualityBool (\x -> Bin Sum (expr) (Bin Sub (Sqrt (Val 2) (-1)) (Val x))) bound 0.001 SqrtWithSmallDegree)
 
 prop_NullSizeOfError :: Property
 prop_NullSizeOfError = property $ do
-  expr <- forAll $ genExprDivZero 100
+  expr <- forAll $ genExpr 100
   bound <- forAll $ genDouble 100
   assert (checkEqualityBool (\x -> Bin Sum (expr) (Bin Sub (Un Log (Val 2)) (Val x))) bound 0.0 NullSizeOfError)
 
 prop_SomeIntegralError :: Property
 prop_SomeIntegralError = property $ do
-  expr <- forAll $ genExprDivZero 100
+  expr <- forAll $ genExpr 100
   bound <- forAll $ genDouble 100
   assert (checkEqualityBool (\x -> Bin Sum (expr) (Bin Sub (Un Exp (Val 1000000.0)) (Val x))) bound 0.001 SomeIntegralError)
 
