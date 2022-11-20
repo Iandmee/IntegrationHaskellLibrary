@@ -3,15 +3,23 @@ module Expr where
 
 -- Тип данных для выражений.
 
-data Expr = Val Double
-          | Div Expr Expr
-          | Log Expr
-          | Exp Expr
-          | Sum Expr Expr
-          | Sub Expr Expr
-          | Mul Expr Expr
+data Expr = Val Double 
+          | Bin BinOp Expr Expr
+          | Un UnOp Expr
           | Sqrt Expr Int
           deriving (Show, Eq)
+
+data BinOp = Div
+          | Sum
+          | Sub
+          | Mul
+          deriving (Show, Eq)
+
+data UnOp = Log
+          | Exp
+          deriving (Show, Eq)
+
+
 
 data Error = DivisionByZero
             | LogOfZero
@@ -40,25 +48,25 @@ totalSqrtEither x y | x < 0.0 = Left SqrtOfNegativeNumber
 
 eval :: Expr -> Either Error Double
 eval (Val n) = return n
-eval (Div x y) = do
+eval (Bin Div x y) = do
   x' <- eval x         -- eval x >>= \x' ->
   y' <- eval y         -- eval y >>= \y' ->
   totalDivEither x' y' -- totalDivEither x' y'
-eval (Log x) = do
+eval (Un Log x) = do
   x' <- eval x         -- eval x >>= \x' ->
   totalLogEither x'    -- totalLogEither x'
-eval (Exp x) = do
+eval (Un Exp x) = do
   x' <- eval x
   Right $ exp x'
-eval (Sum x y) = do
+eval (Bin Sum x y) = do
   x' <- eval x
   y' <- eval y
   Right $ (x' + y')
-eval (Sub x y) = do
+eval (Bin Sub x y) = do
   x' <- eval x
   y' <- eval y
   Right $ (x' - y')
-eval (Mul x y) = do
+eval (Bin Mul x y) = do
   x' <- eval x
   y' <- eval y
   Right $ (x' * y')

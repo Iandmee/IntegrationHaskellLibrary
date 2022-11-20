@@ -9,22 +9,25 @@ import Integration
 import Expr
 
 f1 :: Double -> Expr
-f1 x = Mul (Val x) (Val x)
+f1 x = Bin Mul (Val x) (Val x)
 
 f2 :: Double -> Expr
-f2 x = Log (Val x)
+f2 x = Un Log (Val x)
 
 f3 :: Double -> Expr
 f3 x = Sqrt (Val x) 2
 
 f4 :: Double -> Expr
-f4 x = Div (Val x) (Val 0.0)
+f4 x = Bin Div (Val x) (Val 0.0)
 
 f5 :: Double -> Expr
-f5 x = Exp (Val x)
+f5 x = Un Exp (Val x)
 
 f6 :: Double -> Expr
 f6 x = Sqrt (Val x) 1
+
+f7 :: Double -> Expr
+f7 x = Bin Sum (Un Log (Val 0.0)) (Val x) 
 
 checkEquality :: Either Error Output -> Maybe Error -> Double -> Assertion
 checkEquality x y eps =
@@ -60,3 +63,4 @@ unit_InvalidIntegrations = do
   checkAllmethods f4 (100.0) (1000.0) (Just DivisionByZero) 0.001
   checkAllmethods f5 (1.0) (100000000000.0) (Just SomeIntegralError) 0.00001
   checkAllmethods f6 1.0 10.0 (Just SqrtWithSmallDegree) 0.001
+  checkAllmethods f7 1.0 10.0 (Just LogOfZero) 0.001

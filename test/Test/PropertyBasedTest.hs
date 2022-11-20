@@ -6,35 +6,88 @@ import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import Expr
+import Integration
 import Test.UnitTest (checkAllmethods, checkEquality)
 
-genInt :: Gen Int
-genInt = Gen.int (Range.constant 5 100)
+genOp :: Gen BinOp
+genOp = Gen.element [Sum, Sub, Mul, Div]
 
-generateExprByResult :: Either Error Double -> (Double -> Expr)
-generateExprByResult e  = case e of 
-                       Left LogOfZero -> do 
-                       	t <- genInt
-                       	( \x -> Sum (Val x) (Log (Div (Val 0) (Val (fromIntegral t)))) )
-                       Left LogOfNegativeNumber -> do 
-                       	t <- genInt
-                       	( \x -> Sum (Val x) (Log ( Div (Exp (Log (Val (fromIntegral t)))) (Val (fromIntegral -t)))) )
-                       Left SqrtWithSmallDegree -> do 
-                       	t <- genInt
-                       	( \x -> Sqrt (Mul (Val x)  (Sum (Val 1) (Val 5))) -t ) 
-                       Left SqrtOfNegativeNumber -> do 
-                       	t <- genInt
-                       	( \x -> Sub (Val x) (Sqrt (Val (fromIntegral t)) 2) )
-                       Left DivisionByZero -> do 
-                       	t <- genInt
-                       	( \x -> Div (Sub (Val x) (Val (fromIntegral t))) (Val 0) ) 
-                       Right ex -> do 
-                       	t <- genInt
-                       	( \x -> Sub (Sum (Val x) (Div (Mul (Val ex) (Val (fromIntegral t))) (Exp (Log (Val(fromIntegral t)))))) (Val x) )
+genDouble :: Double -> Gen Double
+genDouble n = Gen.double (Range.constant 1 n)
+
+genExprDivZero :: Double -> Gen Expr
+genExprDivZero n =
+  Gen.recursive
+    Gen.choice
+    [ -- нерекурсивные генераторы
+      numGen
+    ]
+    [ -- рекурсивные генераторы
+      binOpGen
+    ]
+  where
+    numGen = Val <$> Gen.double (Range.constant 1 n)
+    binOpGen = do
+      op <- genOp
+      Gen.subterm2 (genExprDivZero	n) (genExprDivZero n) (Bin op)
+
+
+checkEqualityBool :: (Double -> Expr) -> Double -> Double -> Error -> Bool
+checkEqualityBool ex bound eps er = (partApproxSimpson ex bound (bound + 1) eps) == (Left er) && (partApproxTrap ex bound (bound + 1) eps) == (Left er) && (partApproxReactangles ex bound (bound + 1) eps) == (Left er)
+
+prop_DivisionByZero :: Property
+prop_DivisionByZero = property $ do
+  expr <- forAll $ genExprDivZero 100
+  bound <- forAll $ genDouble 100
+  assert (checkEqualityBool (\x -> Bin Sum (expr) (Bin Div (Val x) (Val 0))) bound 0.001 DivisionByZero)
 
 prop_LogOfZero :: Property
-prop_LogOfZero = property $ do 
-	expr <- forAll $ generateExprByResult (Left LogOfNegativeNumber)
-	checkAllmethods expr 1.0 2.0 (Just LogOfNegativeNumber) 0.001
+prop_LogOfZero = property $ do
+  expr <- forAll $ genExprDivZero 100
+  bound <- forAll $ genDouble 100
+  assert (checkEqualityBool (\x -> Bin Sum (expr) (Bin Sub (Un Log (Val 0)) (Val x))) bound 0.001 LogOfZero)
+
+prop_LogOfNegativeNumber :: Property
+prop_LogOfNegativeNumber = property $ do
+  expr <- forAll $ genExprDivZero 100
+  bound <- forAll $ genDouble 100
+  assert (checkEqualityBool (\x -> Bin Sum (expr) (Bin Sub (Un Log (Val (-2))) (Val x))) bound 0.001 LogOfNegativeNumber)
+
+prop_SqrtOfNegativeNumber :: Property
+prop_SqrtOfNegativeNumber = property $ do
+  expr <- forAll $ genExprDivZero 100
+  bound <- forAll $ genDouble 100
+  assert (checkEqualityBool (\x -> Bin Sum (expr) (Bin Sub (Sqrt (Val (-2)) 2) (Val x))) bound 0.001 SqrtOfNegativeNumber)
+
+prop_SqrtWithSmallDegree :: Property
+prop_SqrtWithSmallDegree = property $ do
+  expr <- forAll $ genExprDivZero 100
+  bound <- forAll $ genDouble 100
+  assert (checkEqualityBool (\x -> Bin Sum (expr) (Bin Sub (Sqrt (Val 2) (-1)) (Val x))) bound 0.001 SqrtWithSmallDegree)
+
+prop_NullSizeOfError :: Property
+prop_NullSizeOfError = property $ do
+  expr <- forAll $ genExprDivZero 100
+  bound <- forAll $ genDouble 100
+  assert (checkEqualityBool (\x -> Bin Sum (expr) (Bin Sub (Un Log (Val 2)) (Val x))) bound 0.0 NullSizeOfError)
+
+prop_SomeIntegralError :: Property
+prop_SomeIntegralError = property $ do
+  expr <- forAll $ genExprDivZero 100
+  bound <- forAll $ genDouble 100
+  assert (checkEqualityBool (\x -> Bin Sum (expr) (Bin Sub (Un Exp (Val 1000000.0)) (Val x))) bound 0.001 SomeIntegralError)
+
+
+
+props :: [TestTree]
+props =
+  [ testProperty "DivisionByZero error" prop_DivisionByZero
+  , testProperty "LogOfZero error" prop_LogOfZero
+  , testProperty "LogOfNegativeNumber error" prop_LogOfNegativeNumber
+  , testProperty "SqrtOfNegativeNumber error" prop_SqrtOfNegativeNumber
+  , testProperty "SqrtWithSmallDegree error" prop_SqrtWithSmallDegree
+  , testProperty "NullSizeOfError error" prop_NullSizeOfError
+  , testProperty "SomeIntegralError error" prop_SomeIntegralError
+  ]
 
 

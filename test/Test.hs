@@ -1,12 +1,12 @@
-{-# OPTIONS_GHC -F -pgmF tasty-discover -optF --tree-display #-}
+-- {-# OPTIONS_GHC -F -pgmF tasty-discover -optF --tree-display #-}
 
 import Test.Tasty
 import Test.Tasty.Hspec
-
+import Utils
 import qualified Test.PropertyBasedTest
-
+import qualified Test.UnitTest
 main :: IO ()
 main = do
-  defaultMain (testGroup "All Tests"
-                [ asdasd
+  defaultMainWithOpts (testGroup "All"
+                [ testGroup	"Properties" Test.PropertyBasedTest.props
                 ])

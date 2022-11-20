@@ -3,10 +3,10 @@ import Integration
 import Expr
 
 f1 :: Double -> Expr
-f1 x = Mul (Val x) (Val x)
+f1 x = Bin Mul (Val x) (Val x)
 
 f2 :: Double -> Expr
-f2 x = Div (Val 1) (Val x)
+f2 x = Bin Div (Val 1) (Val x)
 
 main :: IO()
 main = do
