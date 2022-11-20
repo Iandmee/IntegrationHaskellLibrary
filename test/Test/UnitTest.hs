@@ -1,6 +1,6 @@
 {-# LANGUAGE ImplicitParams #-}
 
-module Test.IntegrationTest where
+module Test.UnitTest where
 
 import Test.Tasty.HUnit (Assertion, assertBool, (@?=))
 import Test.HUnit.Approx ((@?~))

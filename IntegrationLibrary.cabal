@@ -33,7 +33,7 @@ library
       base >=4.7 && <5
   default-language: Haskell2010
 
-executable exe
+executable app
   main-is: Main.hs
   other-modules:
       Paths_IntegrationLibrary
@@ -43,13 +43,32 @@ executable exe
   build-depends:
       IntegrationLibrary
     , base >=4.7 && <5
+    , diagrams
+    , diagrams-lib
+    , diagrams-svg
+  default-language: Haskell2010
+
+executable comparison
+  main-is: Main.hs
+  other-modules:
+      Paths_IntegrationLibrary
+  hs-source-dirs:
+      comparison
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      IntegrationLibrary
+    , base >=4.7 && <5
+    , diagrams
+    , diagrams-lib
+    , diagrams-svg
   default-language: Haskell2010
 
 test-suite IntegrationLibrary-test
   type: exitcode-stdio-1.0
   main-is: Test.hs
   other-modules:
-      Test.IntegrationTest
+      Test.PropertyBasedTest
+      Test.UnitTest
       Paths_IntegrationLibrary
   hs-source-dirs:
       test
@@ -59,9 +78,14 @@ test-suite IntegrationLibrary-test
     , HUnit-approx
     , IntegrationLibrary
     , base >=4.7 && <5
+    , diagrams
+    , diagrams-lib
+    , diagrams-svg
     , hedgehog
     , tasty
     , tasty-discover
     , tasty-hedgehog
+    , tasty-hspec
     , tasty-hunit
+    , tasty-quickcheck
   default-language: Haskell2010
