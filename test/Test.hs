@@ -8,4 +8,5 @@ main :: IO ()
 main = do
   defaultMain (testGroup "All"
                 [ testGroup	"Properties" Test.PropertyBasedTest.props
+                , testGroup "Units" Test.UnitTest.units
                 ])

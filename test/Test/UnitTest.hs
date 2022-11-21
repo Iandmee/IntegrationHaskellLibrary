@@ -2,9 +2,11 @@
 
 module Test.UnitTest where
 
-import Test.Tasty.HUnit (Assertion, assertBool, (@?=))
+import Test.Tasty.HUnit (Assertion, assertBool, (@?=), testCase)
 import Test.HUnit.Approx ((@?~))
-
+import Test.Tasty
+import Test.Tasty.Hedgehog
+import Hedgehog
 import Integration
 import Expr
 
@@ -64,3 +66,6 @@ unit_InvalidIntegrations = do
   checkAllmethods f5 (1.0) (100000000000.0) (Just SomeIntegralError) 0.00001
   checkAllmethods f6 1.0 10.0 (Just SqrtWithSmallDegree) 0.001
   checkAllmethods f7 1.0 10.0 (Just LogOfZero) 0.001
+
+units :: [TestTree]
+units = [testCase "Valid" unit_ValidIntegrations, testCase "Invalid" unit_InvalidIntegrations]
