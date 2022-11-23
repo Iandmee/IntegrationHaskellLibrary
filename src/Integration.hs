@@ -1,20 +1,23 @@
 module Integration where
 import Control.Exception(catch, try, evaluate, SomeException(..))
-import Expr
+import qualified Expr as E
+import Expr (Error(..), eval)
 
-data Output = Output
-  { result :: Double
-  , previousResult :: Double
+data CalculationInput = CalculationInput
+  { f :: (Double -> E.Expr)
+  , a :: Double
+  , step ::Double
+  , ans :: Double
   , parts :: Int
-  }
-  deriving (Show, Eq)
+}
+
 
 max_value = 10^9
 
-trapMethodTerm :: (Double -> Expr) -> Double -> Double -> Either Error Double
-trapMethodTerm f a b = do 
-  let fa = eval $ (f a)
-  let fb = eval $ (f b)
+trapMethodTerm :: E.Input -> Either Error Double
+trapMethodTerm input = do 
+  let fa = eval $ ( (E.f input) (E.a input))
+  let fb = eval $ ( (E.f input) (E.b input))
   case (fa, fb) of 
     (Right t1, Right t2) -> if (t1 > max_value || t1 < (-max_value) || t2 > max_value || t2 < (-max_value))
       then Left SomeIntegralError
@@ -23,55 +26,55 @@ trapMethodTerm f a b = do
     (_, Left e2) -> Left e2
 
 
-iterateThroughPartition :: ((Double -> Expr) -> Double -> Double -> Double -> Int -> Either Error Double) -> (Double -> Expr) -> Double -> Double -> Double -> Double -> Maybe Double -> Int -> Either Error Output
-iterateThroughPartition calculateByXXX f a b d initIntegration (Just lastIntegration) parts = do 
+iterateThroughPartition :: (CalculationInput -> Either Error Double) -> E.Input -> Double -> Maybe Double -> Int -> Either Error E.Output
+iterateThroughPartition calculateByXXX input initIntegration (Just lastIntegration) parts = do 
   if ((fromIntegral parts) > max_value || lastIntegration > max_value || lastIntegration < (-max_value))
     then Left SomeIntegralError
   else do
-   let step = (b - a) / (fromIntegral parts)
-   let integration = calculateByXXX f a step (initIntegration * step) parts
+   let step = ( (E.b input) - (E.a input)) / (fromIntegral parts)
+   let integration = calculateByXXX $ CalculationInput {f = (E.f input), a = (E.a input), step = step, ans = (initIntegration * step), parts = parts}
    case integration of 
      Left e -> Left e
-     Right result -> if (abs (result - lastIntegration) < d) 
-        then Right $ Output {result = result, previousResult = lastIntegration, parts = parts} 
-        else iterateThroughPartition calculateByXXX f a b d initIntegration (Just result) (parts + 1)
+     Right result -> if (abs (result - lastIntegration) < (E.eps input)) 
+        then Right $ E.Output {E.result = result, E.previousResult = lastIntegration, E.parts = parts} 
+        else iterateThroughPartition calculateByXXX input initIntegration (Just result) (parts + 1)
 
-iterateThroughPartition calculateByXXX f a b d initIntegration Nothing parts = do
-  let step = (b - a) / (fromIntegral parts)
-  let integration = calculateByXXX f a step (initIntegration * step) parts
+iterateThroughPartition calculateByXXX input initIntegration Nothing parts = do
+  let step = ( (E.b input) - (E.a input)) / (fromIntegral parts)
+  let integration = calculateByXXX $ CalculationInput {f = (E.f input), a = (E.a input), step = step, ans = (initIntegration * step), parts = parts}
   case integration of 
     Left e -> Left e
-    Right result -> iterateThroughPartition calculateByXXX f a b d initIntegration (Just result) (parts + 1)
+    Right result -> iterateThroughPartition calculateByXXX input initIntegration (Just result) (parts + 1)
 
   
 
-calculateByReactangles :: (Double -> Expr) -> Double -> Double -> Double -> Int -> Either Error Double
-calculateByReactangles f a step ans 0 =  Right ans
-calculateByReactangles f a step ans parts = do 
-  let result = eval $ f (a + (step / 2))
+calculateByReactangles :: CalculationInput -> Either Error Double
+calculateByReactangles input | (parts input) == 0 =  Right (ans input)
+                             | otherwise = do 
+  let result = eval $ (f input) ( (a input) + ((step input) / 2))
   case result of
     Left ex -> Left ex
     Right res -> if (res > max_value || res < (-max_value)) 
       then Left SomeIntegralError 
-      else calculateByReactangles f (a + step) step (ans + res * step) (parts - 1)
+      else calculateByReactangles $ CalculationInput {f = (f input), a = ( (a input) + (step input) ), step = (step input), ans = ( (ans input) + res * (step input)), parts = ( (parts input) - 1)}
 
 
-calculateByTrap :: (Double -> Expr) -> Double -> Double -> Double -> Int -> Either Error Double 
-calculateByTrap f a step ans 1 =  Right ans
-calculateByTrap f a step ans parts = do 
-  let result = eval $ f (a + step)
+calculateByTrap :: CalculationInput -> Either Error Double 
+calculateByTrap input | (parts input) == 1 =  Right (ans input)
+                      | otherwise =  do 
+  let result = eval $ (f input) ((a input) + (step input))
   case result of
     Left ex -> Left ex
     Right res -> if (res > max_value || res < (-max_value))
       then Left SomeIntegralError
-      else calculateByTrap f (a + step) step (ans + res * step) (parts - 1)
+      else calculateByTrap $ CalculationInput {f = (f input), a = ( (a input) + (step input)), step = (step input), ans = ((ans input) + res * (step input)), parts = ((parts input) - 1)}
 
 
-calculateBySimpson :: (Double -> Expr) -> Double -> Double -> Double -> Int -> Either Error Double
-calculateBySimpson f a step ans 0  = Right ans
-calculateBySimpson f a step ans parts = do 
-  let trap2 = calculateByTrap f a (step / 2) (ans / 2) (parts * 2)
-  let trap1 = calculateByTrap f a step ans parts
+calculateBySimpson :: CalculationInput -> Either Error Double
+calculateBySimpson input | (parts input) == 0  = Right (ans input)
+                         | otherwise = do 
+  let trap2 = calculateByTrap $ CalculationInput {f = (f input), a = (a input), step = ( (step input) / 2), ans = ((ans input) / 2), parts = ( (parts input) * 2)}
+  let trap1 = calculateByTrap input
   case (trap1, trap2) of 
     (Right t1, Right t2) -> if (t1 > max_value || t1 < (-max_value) || t2 > max_value || t2 < (-max_value))
       then Left SomeIntegralError
@@ -80,29 +83,27 @@ calculateBySimpson f a step ans parts = do
     (_, Left ex2) -> Left ex2
 
 
-partApproxReactangles :: (Double -> Expr) -> Double -> Double -> Double -> Either Error Output
-partApproxReactangles f a b d | d == 0.0 = Left NullSizeOfError
-                   | otherwise = iterateThroughPartition calculateByReactangles f a b d 0.0 Nothing 1
+partApproxReactangles :: E.Input -> Either Error E.Output
+partApproxReactangles input | (E.eps input) == 0.0 = Left NullSizeOfError
+                   | otherwise = iterateThroughPartition calculateByReactangles input 0.0 Nothing 1
 
 
-partApproxTrap :: (Double -> Expr) -> Double -> Double -> Double -> Either Error Output
-partApproxTrap f a b d | d == 0.0 = Left NullSizeOfError
+partApproxTrap :: E.Input -> Either Error E.Output
+partApproxTrap input | (E.eps input) == 0.0 = Left NullSizeOfError
                        | otherwise = do
                            case initIntegration of
-                             Right res -> iterateThroughPartition calculateByTrap f a b d res Nothing 1
+                             Right res -> iterateThroughPartition calculateByTrap input res Nothing 1
                              Left ex -> Left ex
                    where
-                     initIntegration = trapMethodTerm f a b
+                     initIntegration = trapMethodTerm input
 
 
-partApproxSimpson :: (Double -> Expr) -> Double -> Double -> Double -> Either Error Output
-partApproxSimpson f a b d | d == 0.0 = Left NullSizeOfError
+partApproxSimpson :: E.Input -> Either Error E.Output
+partApproxSimpson input | (E.eps input) == 0.0 = Left NullSizeOfError
                           | otherwise = do
                               case initIntegration of
-                                Right res -> iterateThroughPartition calculateBySimpson f a b d res Nothing 1
+                                Right res -> iterateThroughPartition calculateBySimpson input res Nothing 1
                                 Left ex -> Left ex
                       where
-                        initIntegration = trapMethodTerm f a b
+                        initIntegration = trapMethodTerm input
               
-
-

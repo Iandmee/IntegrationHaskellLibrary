@@ -61,6 +61,7 @@ executable comparison
     , diagrams
     , diagrams-lib
     , diagrams-svg
+    , matplotlib
   default-language: Haskell2010
 
 test-suite IntegrationLibrary-test

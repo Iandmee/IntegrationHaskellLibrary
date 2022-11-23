@@ -30,6 +30,19 @@ data Error = DivisionByZero
             | SomeIntegralError
             deriving (Show, Eq)
 
+data Output = Output
+  { result :: Double
+  , previousResult :: Double
+  , parts :: Int
+  }
+  deriving (Show, Eq)
+
+data Input = Input
+  { f :: (Double -> Expr)
+  , a :: Double
+  , b :: Double
+  , eps :: Double
+}
 
 totalDivEither :: Double -> Double -> Either Error Double
 totalDivEither x y | y == 0.0 = Left DivisionByZero

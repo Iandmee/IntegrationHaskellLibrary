@@ -1,5 +1,5 @@
 module Main (main) where
-import Integration
+import qualified Integration as I
 import Expr
 
 f1 :: Double -> Expr
@@ -11,9 +11,9 @@ f2 x = Bin Div (Val 1) (Val x)
 main :: IO()
 main = do
   putStrLn $ show $ (1/0 - 1/0)
-  let r = partApproxReactangles f1 1.0 2.0 0.001
+  let r = I.partApproxReactangles $ Input {f = f1, a = 1.0, b = 2.0, eps = 0.001}
   putStrLn $ show $ r
-  let r = partApproxTrap f1 1.0 2.0 0.001
+  let r = I.partApproxTrap $ Input {f = f1, a = 1.0, b = 2.0, eps = 0.001}
   putStrLn $ show $ r
-  let r = partApproxSimpson f1 1.0 2.0 0.001
+  let r = I.partApproxSimpson $ Input {f = f1, a = 1.0, b = 2.0, eps = 0.001}
   putStrLn $ show $ r

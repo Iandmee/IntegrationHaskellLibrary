@@ -7,7 +7,7 @@ import Test.HUnit.Approx ((@?~))
 import Test.Tasty
 import Test.Tasty.Hedgehog
 import Hedgehog
-import Integration
+import qualified Integration as I
 import Expr
 
 f1 :: Double -> Expr
@@ -46,11 +46,11 @@ checkEquality x y eps =
 
 checkAllmethods :: (Double -> Expr) -> Double -> Double -> Maybe Error -> Double -> Assertion
 checkAllmethods f a b errorOccured eps = do 
-   let res = partApproxReactangles f a b eps
+   let res = I.partApproxReactangles $ Input {f=f, a=a, b=b, eps=eps}
    checkEquality res errorOccured eps
-   let res = partApproxTrap f a b eps
+   let res = I.partApproxTrap $ Input {f=f, a=a, b=b, eps=eps}
    checkEquality res errorOccured eps
-   let res = partApproxSimpson f a b eps
+   let res = I.partApproxSimpson $ Input {f=f, a=a, b=b, eps=eps}
    checkEquality res errorOccured eps
 
 unit_ValidIntegrations = do

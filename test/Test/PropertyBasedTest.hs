@@ -6,7 +6,7 @@ import Hedgehog
 import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 import Expr
-import Integration
+import qualified Integration as I
 import Test.UnitTest (checkAllmethods, checkEquality)
 
 genOp :: Gen BinOp
@@ -33,7 +33,7 @@ genExpr n =
 
 
 checkEqualityBool :: (Double -> Expr) -> Double -> Double -> Error -> Bool
-checkEqualityBool ex bound eps er = (partApproxSimpson ex bound (bound + 1) eps) == (Left er) && (partApproxTrap ex bound (bound + 1) eps) == (Left er) && (partApproxReactangles ex bound (bound + 1) eps) == (Left er)
+checkEqualityBool ex bound eps er = (I.partApproxSimpson $ Input {f = ex, a = bound, b = (bound + 1), eps = eps}) == (Left er) && (I.partApproxTrap $ Input {f = ex, a = bound, b = (bound + 1), eps = eps}) == (Left er) && (I.partApproxReactangles $ Input {f = ex, a = bound, b = (bound + 1), eps = eps}) == (Left er)
 
 prop_DivisionByZero :: Property
 prop_DivisionByZero = property $ do
