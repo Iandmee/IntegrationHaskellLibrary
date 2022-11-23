@@ -3,7 +3,7 @@ module Expr where
 
 -- Тип данных для выражений.
 
-data Expr = Val Double 
+data Expr = Val Double
           | Bin BinOp Expr Expr
           | Un UnOp Expr
           | Sqrt Expr Int
@@ -25,22 +25,22 @@ data Error = DivisionByZero
             | LogOfZero
             | LogOfNegativeNumber
             | SqrtOfNegativeNumber
-            | SqrtWithSmallDegree 
+            | SqrtWithSmallDegree
             | NullSizeOfError
             | SomeIntegralError
             deriving (Show, Eq)
 
 data Output = Output
-  { result :: Double
+  { result         :: Double
   , previousResult :: Double
-  , parts :: Int
+  , parts          :: Int
   }
   deriving (Show, Eq)
 
 data Input = Input
-  { f :: (Double -> Expr)
-  , a :: Double
-  , b :: Double
+  { f   :: (Double -> Expr)
+  , a   :: Double
+  , b   :: Double
   , eps :: Double
 }
 

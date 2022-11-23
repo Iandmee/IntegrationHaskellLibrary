@@ -2,13 +2,13 @@
 
 module Test.UnitTest where
 
-import Test.Tasty.HUnit (Assertion, assertBool, (@?=), testCase)
-import Test.HUnit.Approx ((@?~))
-import Test.Tasty
-import Test.Tasty.Hedgehog
-import Hedgehog
-import qualified Integration as I
-import Expr
+import           Expr
+import           Hedgehog
+import qualified Integration         as I
+import           Test.HUnit.Approx   ((@?~))
+import           Test.Tasty
+import           Test.Tasty.HUnit    (Assertion, assertBool, testCase, (@?=))
+import           Test.Tasty.Hedgehog
 
 f1 :: Double -> Expr
 f1 x = Bin Mul (Val x) (Val x)
@@ -29,7 +29,7 @@ f6 :: Double -> Expr
 f6 x = Sqrt (Val x) 1
 
 f7 :: Double -> Expr
-f7 x = Bin Sum (Un Log (Val 0.0)) (Val x) 
+f7 x = Bin Sum (Un Log (Val 0.0)) (Val x)
 
 checkEquality :: Either Error Output -> Maybe Error -> Double -> Assertion
 checkEquality x y eps =
@@ -38,14 +38,14 @@ checkEquality x y eps =
     where
 	  go (Right x) (Nothing) = do
 		(result x) @?~ (previousResult x)
-	  go (Left x) (Just y) = do 
+	  go (Left x) (Just y) = do
 	  	x @?= y
 	  go _ _ = do
 	  	fail $ "Extra Error!"
 
 
 checkAllmethods :: (Double -> Expr) -> Double -> Double -> Maybe Error -> Double -> Assertion
-checkAllmethods f a b errorOccured eps = do 
+checkAllmethods f a b errorOccured eps = do
    let res = I.partApproxReactangles $ Input {f=f, a=a, b=b, eps=eps}
    checkEquality res errorOccured eps
    let res = I.partApproxTrap $ Input {f=f, a=a, b=b, eps=eps}
@@ -57,8 +57,8 @@ unit_ValidIntegrations = do
   checkAllmethods f1 1.0 2.0 Nothing 0.001
   checkAllmethods f2 1.0 5.0 Nothing 0.001
   checkAllmethods f3 1000.0 2000.0 Nothing 0.0001
- 
-unit_InvalidIntegrations = do 
+
+unit_InvalidIntegrations = do
   checkAllmethods f1 1.0 5.0 (Just NullSizeOfError) 0.0
   checkAllmethods f2 (-1.0) 2.0 (Just LogOfNegativeNumber) 0.001
   checkAllmethods f3 (-2.0) 2.0 (Just SqrtOfNegativeNumber) 0.001

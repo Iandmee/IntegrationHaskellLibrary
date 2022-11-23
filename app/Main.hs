@@ -1,6 +1,6 @@
 module Main (main) where
+import           Expr
 import qualified Integration as I
-import Expr
 
 f1 :: Double -> Expr
 f1 x = Bin Mul (Val x) (Val x)

@@ -1,13 +1,13 @@
 module Test.PropertyBasedTest where
 
-import Test.Tasty
-import Test.Tasty.Hedgehog
-import Hedgehog
-import qualified Hedgehog.Gen as Gen
-import qualified Hedgehog.Range as Range
-import Expr
-import qualified Integration as I
-import Test.UnitTest (checkAllmethods, checkEquality)
+import           Expr
+import           Hedgehog
+import qualified Hedgehog.Gen        as Gen
+import qualified Hedgehog.Range      as Range
+import qualified Integration         as I
+import           Test.Tasty
+import           Test.Tasty.Hedgehog
+import           Test.UnitTest       (checkAllmethods, checkEquality)
 
 genOp :: Gen BinOp
 genOp = Gen.element [Sum, Sub, Mul, Div]
@@ -33,7 +33,9 @@ genExpr n =
 
 
 checkEqualityBool :: (Double -> Expr) -> Double -> Double -> Error -> Bool
-checkEqualityBool ex bound eps er = (I.partApproxSimpson $ Input {f = ex, a = bound, b = (bound + 1), eps = eps}) == (Left er) && (I.partApproxTrap $ Input {f = ex, a = bound, b = (bound + 1), eps = eps}) == (Left er) && (I.partApproxReactangles $ Input {f = ex, a = bound, b = (bound + 1), eps = eps}) == (Left er)
+checkEqualityBool ex bound eps er = (I.partApproxSimpson $ Input {f = ex, a = bound, b = (bound + 1), eps = eps}) == (Left er) 
+                                && (I.partApproxTrap $ Input {f = ex, a = bound, b = (bound + 1), eps = eps}) == (Left er)
+                                && (I.partApproxReactangles $ Input {f = ex, a = bound, b = (bound + 1), eps = eps}) == (Left er)
 
 prop_DivisionByZero :: Property
 prop_DivisionByZero = property $ do
