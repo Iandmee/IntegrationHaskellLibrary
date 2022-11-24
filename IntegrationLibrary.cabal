@@ -24,6 +24,7 @@ library
   exposed-modules:
       Expr
       Integration
+      Internal
   other-modules:
       Paths_IntegrationLibrary
   hs-source-dirs:

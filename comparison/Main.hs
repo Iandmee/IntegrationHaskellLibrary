@@ -7,7 +7,7 @@ import qualified Integration         as I
 
 
 inputFunction :: Double -> Expr
-inputFunction x = Un Exp (Val x)
+inputFunction x = Sqrt (Val x) 2
 
 min_eps = 1 / (exp 10)
 start_eps = 1.0
