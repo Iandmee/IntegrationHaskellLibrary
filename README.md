@@ -99,7 +99,7 @@ stack run comparison
 It will produce `comparison.jpg` with the required diagram.
 <br>
 <br>
- <img src="https://github.com/Iandmee/IntegrationHaskellLibrary/blob/main/comparison.png" alt="alt text" title="image Title" width="450"/>
+ <img src="https://github.com/Iandmee/IntegrationHaskellLibrary/blob/main/img/comparison1.png" alt="alt text" title="image Title" width="450"/>
 
 (in the example red line behind the blue one)
 <br>
